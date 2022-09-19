@@ -1,4 +1,4 @@
-# show-actor-list
+# actor-list-NXTpeople
 
 ## Project setup
 ```

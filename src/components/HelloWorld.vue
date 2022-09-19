@@ -1,58 +1,173 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <v-container>
+    <v-tabs v-model="selectedTab" color="yellow" align-with-title>
+      <v-tabs-slider color="yellow"></v-tabs-slider>
+
+      <v-tab v-for="item in items" :key="item">
+        {{ item }}
+      </v-tab>
+    </v-tabs>
+    <div class="mt-5 text-center" v-if="selectedTab === 1">
+      <div v-if="haveFavoriteActor">
+        <div
+          v-for="(actor, index) in favoriteActorList"
+          :key="index"
+          class="parent d-inline-flex"
+        >
+          <div>
+            <v-card width="250" class="text-center pa-4 ma-2">
+              <div class="text-right">
+                <v-btn
+                  icon
+                  :color="actor.favorite ? 'yellow' : ''"
+                  @click="onClickFavorite(actor)"
+                >
+                  <v-icon>mdi-star</v-icon>
+                </v-btn>
+              </div>
+              <v-avatar size="56">
+                <img
+                  alt="actor"
+                  v-if="actor.image && actor.image.medium && actor.image.medium"
+                  :src="actor.image && actor.image.medium && actor.image.medium"
+                />
+                <img
+                  alt="actor"
+                  v-else
+                  src="https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg"
+                />
+              </v-avatar>
+              <div class="mt-3 font-weight-bold">{{ actor.name }}</div>
+              <div class="mt-3">
+                {{ actor.birthday ? actor.birthday : "No brith date" }}
+              </div>
+              <div class="mt-3" v-if="actor.country">
+                {{ actor.country && actor.country.name }}
+              </div>
+              <div class="mt-3" v-else>No country name</div>
+            </v-card>
+          </div>
+        </div>
+      </div>
+      <div v-else>No Favorite Actor</div>
+    </div>
+    <div class="mt-5 text-center" v-if="selectedTab === 0">
+      <div v-for="(actor, index) in actorList" :key="index" class="parent d-inline-flex">
+        <div>
+          <v-card width="250" class="text-center pa-4 ma-2">
+            <div class="text-right">
+              <v-btn
+                icon
+                :color="actor.favorite ? 'yellow' : ''"
+                @click="onClickFavorite(actor)"
+              >
+                <v-icon>mdi-star</v-icon>
+              </v-btn>
+            </div>
+            <v-avatar size="56">
+              <img
+                alt="actor"
+                v-if="actor.image && actor.image.medium && actor.image.medium"
+                :src="actor.image && actor.image.medium && actor.image.medium"
+              />
+              <img
+                alt="actor"
+                v-else
+                src="https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg"
+              />
+            </v-avatar>
+            <div class="mt-3 font-weight-bold">{{ actor.name }}</div>
+            <div class="mt-3">
+              {{ actor.birthday ? actor.birthday : "No brith date" }}
+            </div>
+            <div class="mt-3" v-if="actor.country">
+              {{ actor.country && actor.country.name }}
+            </div>
+            <div class="mt-3" v-else>No country name</div>
+          </v-card>
+        </div>
+      </div>
+    </div>
+  </v-container>
 </template>
 
 <script>
+import axios from "axios";
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  }
-}
-</script>
+  name: "HelloWorld",
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+  data: () => ({
+    selectedTab: 0,
+    items: ["actors", "favorites"],
+    actorList: [],
+    favoriteActorList: [],
+  }),
+  created() {
+    localStorage.setItem("FavoriteActorList", []);
+    this.getActors();
+  },
+  computed: {
+    haveFavoriteActor() {
+      return JSON.parse(localStorage.getItem("FavoriteActorList"));
+    },
+  },
+  methods: {
+    getActors() {
+      axios.get("https://api.tvmaze.com/people").then((res) => {
+        this.actorList = res.data.map((element) => {
+          element.favorite = false;
+          return element;
+        });
+      });
+    },
+    onClickFavorite(actor) {
+      if (actor.favorite) {
+        actor.favorite = false;
+        if (this.favoriteActorList.length > 0) {
+          const Findactor = this.favoriteActorList.find((a) => a.id === actor.id);
+          if (Findactor) {
+            let FindIndex = null;
+            this.favoriteActorList.forEach((a, index) => {
+              if (a.id === actor.id) {
+                FindIndex = index;
+              }
+            });
+            this.favoriteActorList.splice(FindIndex, 1);
+            localStorage.removeItem('FavoriteActorList')
+            localStorage.setItem(
+              "FavoriteActorList",
+              JSON.stringify(this.favoriteActorList)
+            );
+          }
+        }
+      } else {
+        actor.favorite = true;
+        if (this.favoriteActorList.length > 0) {
+          const Findactor = this.favoriteActorList.find((a) => a.id === actor.id);
+          if (!Findactor) {
+            this.favoriteActorList.push(actor);
+            localStorage.removeItem('FavoriteActorList')
+            localStorage.setItem(
+              "FavoriteActorList",
+              JSON.stringify(this.favoriteActorList)
+            );
+          }
+        } else {
+          this.favoriteActorList.push(actor);
+          localStorage.removeItem('FavoriteActorList')
+          localStorage.setItem(
+            "FavoriteActorList",
+            JSON.stringify(this.favoriteActorList)
+          );
+        }
+      }
+    },
+  },
+};
+</script>
+<style>
+.parent {
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>
